@@ -1,0 +1,25 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get("token")?.value || "";
+
+  const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
+
+  // If the user is on /auth and already logged in, redirect to home
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  // If the user is not logged in and is NOT on /auth, redirect to /auth
+  if (!token && !isAuthPage) {
+    return NextResponse.redirect(new URL("/auth", req.url));
+  }
+
+  return NextResponse.next(); // Allow the request to proceed
+}
+
+// Apply middleware to all routes EXCEPT static files, API routes, and Next.js internals
+export const config = {
+  matcher: ["/((?!_next|static|favicon.ico).*)"], // Protects everything except /auth and Next.js assets
+};
