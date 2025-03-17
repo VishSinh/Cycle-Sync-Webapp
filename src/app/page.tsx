@@ -7,6 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { AuthService } from "@/service/api/auth-service";
 import { useRouter } from "next/navigation";
+import { DashoardService } from "@/service/api/dashboard-service";
+
+
+interface DashboardDetails {
+  currentPhase: string,
+  avgCycleLength: number,
+  nextPeriodStart: string,
+  daysUntilNextPeriod: number,
+  daysUntilNextPhase: number,
+}
 
 // Define event type to ensure consistency
 type EventType = "cycle" | "exercise" | "health" | "wellness";
@@ -91,18 +101,43 @@ function LazyLoad({ children, id }: { children: React.ReactNode, id: string }) {
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [dashboardDetails, setDashboardDetails] = useState<DashboardDetails | null>(null);
+  const [nextPeriodDate, setNextPeriodDate] = useState<Date>(new Date());
 
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
-      // Check if user is logged in
-      if (!AuthService.isLoggedIn()) {
-        router.push("/auth");
-        return;
-      }
       
-      // Simulate loading for 3 seconds
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const response = await DashoardService.getDashboardDetails();
+
+      console.log(response.data);
+
+      if (response.success) {
+        if (response.data.currentPhase == 0) {
+          response.data.currentPhase = "Menstrual";
+        }
+        else if (response.data.currentPhase == 1) {
+          response.data.currentPhase = "Follicular";
+        }
+        else if (response.data.currentPhase == 2) {
+          response.data.currentPhase = "Ovulation";
+        }
+        else if (response.data.currentPhase == 3) {
+          response.data.currentPhase = "Luteal";
+        }
+
+        setNextPeriodDate(new Date(response.data.nextPeriodStart));
+
+        // Convert date to Month Day format
+        response.data.nextPeriodStart = new Date(response.data.nextPeriodStart).toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric'
+        });
+
+        setDashboardDetails(response.data);
+
+        console.log(dashboardDetails);
+      }
       setLoading(false);
     };
 
@@ -111,12 +146,6 @@ export default function Dashboard() {
 
   // Dummy data
   const cyclePhase = "Follicular";
-  const daysUntilNextPhase = 7;
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
 
   // Dummy recommendations based on cycle phase
   const recommendations = {
@@ -157,10 +186,6 @@ export default function Dashboard() {
       
       {/* Main content */}
       <main className="container mx-auto pt-24 pb-12 px-4">
-        {/* <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Your Dashboard</h1>
-          <p className="text-gray-600">{currentDate}</p>
-        </div> */}
 
         {/* Stats cards */}
         <LazyLoad id = "stats-cards">
@@ -171,9 +196,9 @@ export default function Dashboard() {
               <CardDescription>Your menstrual cycle status</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{cyclePhase}</div>
+              <div className="text-3xl font-bold">{dashboardDetails?.currentPhase}</div>
               <p className="text-sm text-muted-foreground mt-1">
-                {daysUntilNextPhase} days until next phase
+                {dashboardDetails?.daysUntilNextPhase} days until next phase
               </p>
             </CardContent>
           </Card>
@@ -184,9 +209,9 @@ export default function Dashboard() {
               <CardDescription>Your average cycle duration</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">28 days</div>
+                <div className="text-3xl font-bold">{dashboardDetails?.avgCycleLength}</div>
               <p className="text-sm text-muted-foreground mt-1">
-                Based on your last 6 cycles
+                Based on your last cycles
               </p>
             </CardContent>
             </Card>
@@ -198,9 +223,9 @@ export default function Dashboard() {
               <CardDescription>Estimated start date</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">March 24</div>
+                <div className="text-3xl font-bold">{dashboardDetails?.nextPeriodStart}</div>
               <p className="text-sm text-muted-foreground mt-1">
-                8 days from today
+                {dashboardDetails?.daysUntilNextPeriod} days from today
               </p>
             </CardContent>
           </Card>
@@ -209,7 +234,12 @@ export default function Dashboard() {
 
         {/* Chart section (lazy loaded) */}
         <LazyLoad id="cycle-chart">
-          <CycleChart />
+          <CycleChart
+            currentPhase={dashboardDetails?.currentPhase}
+            daysUntilNextPhase={dashboardDetails?.daysUntilNextPhase}
+            cycleLength={dashboardDetails?.avgCycleLength}
+            nextPeriodDate={nextPeriodDate}
+          />
         </LazyLoad>
         
         <LazyLoad id="recommendations">
@@ -218,11 +248,11 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Phase-based Recommendations</CardTitle>
-              <CardDescription>Optimized for your {cyclePhase} phase</CardDescription>
+              <CardDescription>Optimized for your {dashboardDetails?.currentPhase} phase</CardDescription>
             </CardHeader>
             <CardContent>
               <LazyLoad id="recommendations">
-                <RecommendationsList recommendations={recommendations} phase={cyclePhase} />
+                <RecommendationsList recommendations={recommendations} phase={dashboardDetails?.currentPhase} />
               </LazyLoad>
             </CardContent>
           </Card>
@@ -235,7 +265,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <LazyLoad id="exercise-section">
-                <ExerciseSection phase={cyclePhase} />
+                <ExerciseSection phase={dashboardDetails?.currentPhase} />
               </LazyLoad>
             </CardContent>
           </Card>
@@ -258,7 +288,7 @@ export default function Dashboard() {
         {/* Nutrition section (lazy loaded) */}
         <div className="mt-8">
           <LazyLoad id="nutrition-tips">
-            <NutritionTips phase={cyclePhase} />
+            <NutritionTips phase={dashboardDetails?.currentPhase} />
           </LazyLoad>
         </div>
 

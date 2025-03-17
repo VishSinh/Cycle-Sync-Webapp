@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AuthService } from "@/service/api/auth-service";
 import { Dancing_Script } from "next/font/google";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
+import { User, LogIn, LogOut, Droplet } from "lucide-react"
+import Routes from "@/lib/routes";
 
 // Initialize the font
 const dancingScript = Dancing_Script({
@@ -24,9 +26,9 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
+    router.push(Routes.LOGIN);
     await AuthService.logout();
     setIsLoggedIn(false);
-    router.push("/auth");
   };
 
   return (
@@ -38,16 +40,19 @@ export default function Navbar() {
         <div className="flex items-center space-x-4">
           {isLoggedIn ? (
             <>
-              <Link href="/profile">
-                <Button variant="outline">Profile</Button>
+              <Link href={Routes.PROFILE}>
+                <Button variant="ghost"><User />Profile</Button>
               </Link>
-              <Button variant="outline" onClick={handleLogout}>
-                Logout
+              <Link href={Routes.CYCLE}>
+                <Button variant="ghost"><Droplet />Cycle</Button>
+              </Link>
+              <Button variant="ghost" onClick={handleLogout}>
+                <LogOut /> Logout
               </Button>
             </>
           ) : (
-            <Link href="/auth">
-              <Button variant="outline">Login</Button>
+            <Link href={Routes.LOGIN}>
+              <Button variant="ghost"><LogIn /> Login</Button>
             </Link>
           )}
         </div>
@@ -55,3 +60,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

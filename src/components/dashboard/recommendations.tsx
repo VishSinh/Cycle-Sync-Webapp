@@ -4,7 +4,7 @@ type RecommendationsProps = {
     exercise: string[];
     selfCare: string[];
   };
-  phase: string;
+  phase: string | undefined;
 };
 
 export default function RecommendationsList({ recommendations, phase }: RecommendationsProps) {

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type NutritionTipsProps = {
-  phase: string;
+  phase: any;
 };
 
 export default function NutritionTips({ phase }: NutritionTipsProps) {

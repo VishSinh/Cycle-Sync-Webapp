@@ -1,5 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { AuthService } from '@/service/api/auth-service';
+import { NextResponse } from 'next/server';
+import Routes from '@/lib/routes';
 
 export interface RequestOptions {
     url: string;
@@ -50,28 +52,37 @@ export class RequestHelper {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        // Convert request body and params from camelCase to snake_case
+        const snakeCaseBody = body ? this.convertKeysToSnakeCase(body) : body;
+        const snakeCaseParams = params ? this.convertKeysToSnakeCase(params) : params;
+
         const config: AxiosRequestConfig = {
             url: this.getFullUrl(url),
             method,
-            params,
-            data: body,
+            params: snakeCaseParams,
+            data: snakeCaseBody,
             headers: {
                 'Content-Type': 'application/json',
                 ...headers,
             },
             timeout,
             withCredentials,
+            // Add this to ensure errors are thrown for non-2xx status codes
+            validateStatus: (status) => status >= 200 && status < 300,
         };
 
         try {
             const response: AxiosResponse = await axios(config);
+
+            // Convert snake_case keys to camelCase in the response data
+            const convertedData = this.convertKeysToCamelCase(response.data);
             
             // If the API already returns in our expected format, use it directly
-            if (response.data.hasOwnProperty('success') && 
-                response.data.hasOwnProperty('data') && 
-                response.data.hasOwnProperty('error')) {
+            if (convertedData.hasOwnProperty('success') && 
+                convertedData.hasOwnProperty('data') && 
+                convertedData.hasOwnProperty('error')) {
                 return {
-                    ...response.data,
+                    ...convertedData,
                     status: response.status
                 } as ApiResponse<T>;
             }
@@ -79,7 +90,7 @@ export class RequestHelper {
             // Otherwise, transform to our expected format
             return {
                 success: true,
-                data: response.data,
+                data: convertedData,
                 error: null,
                 status: response.status,
             };
@@ -94,13 +105,41 @@ export class RequestHelper {
                 error: axiosError.message,
             });
 
+            // Handle 401 Unauthorized errors
+            if (axiosError.response?.status === 401) {
+                // Clear authentication token
+                AuthService.clearAuthToken();
+                
+                // Redirect to auth page
+                if (typeof window !== 'undefined') {
+                    window.location.href = Routes.LOGIN;
+                } else {
+                    // Handle server-side redirect if needed
+                    return {
+                        success: false,
+                        data: null,
+                        error: {
+                            code: 'UNAUTHORIZED',
+                            message: 'Session expired. Please log in again.',
+                            details: ''
+                        },
+                        status: 401,
+                        redirect: Routes.LOGIN
+                    } as ApiResponse<T>;
+                }
+            }
+
             // If the server returned an error in our format, use it
             if (axiosError.response?.data && 
                 typeof axiosError.response.data === 'object' &&
                 axiosError.response.data.hasOwnProperty('success') && 
                 axiosError.response.data.hasOwnProperty('error')) {
+                
+                // Convert snake_case keys to camelCase in the error response
+                const convertedErrorData = this.convertKeysToCamelCase(axiosError.response.data);
+                
                 return {
-                    ...(axiosError.response.data as any),
+                    ...convertedErrorData,
                     status: axiosError.response.status
                 };
             }
@@ -293,5 +332,67 @@ export class RequestHelper {
         }
 
         return error.message || 'Unknown error occurred';
+    }
+
+    /**
+     * Converts snake_case keys to camelCase in an object or array recursively
+     * @param data The data to convert
+     * @returns The converted data
+     */
+    private static convertKeysToCamelCase(data: any): any {
+        if (data === null || data === undefined) {
+            return data;
+        }
+
+        if (Array.isArray(data)) {
+            return data.map(item => this.convertKeysToCamelCase(item));
+        }
+
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            const newObj: any = {};
+            
+            Object.keys(data).forEach(key => {
+                // Convert the key from snake_case to camelCase
+                const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                
+                // Convert any nested objects or arrays
+                newObj[camelKey] = this.convertKeysToCamelCase(data[key]);
+            });
+            
+            return newObj;
+        }
+        
+        return data;
+    }
+
+    /**
+     * Converts camelCase keys to snake_case in an object or array recursively
+     * @param data The data to convert
+     * @returns The converted data
+     */
+    private static convertKeysToSnakeCase(data: any): any {
+        if (data === null || data === undefined) {
+            return data;
+        }
+
+        if (Array.isArray(data)) {
+            return data.map(item => this.convertKeysToSnakeCase(item));
+        }
+
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            const newObj: any = {};
+            
+            Object.keys(data).forEach(key => {
+                // Convert the key from camelCase to snake_case
+                const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                
+                // Convert any nested objects or arrays
+                newObj[snakeKey] = this.convertKeysToSnakeCase(data[key]);
+            });
+            
+            return newObj;
+        }
+        
+        return data;
     }
 }

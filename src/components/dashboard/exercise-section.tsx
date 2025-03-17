@@ -1,5 +1,5 @@
 type ExerciseSectionProps = {
-  phase: string;
+  phase:any;
 };
 
 export default function ExerciseSection({ phase }: ExerciseSectionProps) {
