@@ -242,7 +242,33 @@ export default function PeriodsPage() {
             <main className="container mx-auto pt-24 pb-12 px-4">
                 
                 <div className="flex flex-col md:flex-row gap-6">
-                    {/* Sticky Navigation */}
+                    {/* Main Content */}
+                    <div className="flex-1 space-y-6">
+                        <Section id="status" title="Current Status">
+                            <CurrentStatus 
+                                currentPeriod={currentPeriod}
+                                pastPeriods={pastPeriods}
+                                handleStartPeriod={handleStartPeriod}
+                                handleEndPeriod={handleEndPeriod}
+                                loading={loading}
+                            />
+                        </Section>
+                        
+                        <Section id="history" title="Period History">
+                            <PeriodHistory pastPeriods={pastPeriods} />
+                        </Section>
+                        
+                        <Section id="symptoms" title="Symptom Tracking">
+                            <SymptomTracking 
+                                symptoms={symptoms}
+                                setSymptoms={setSymptoms}
+                                loading={loading}
+                                setLoading={setLoading}
+                            />
+                        </Section>
+                    </div>
+                    
+                    {/* Sticky Navigation - Now on the right side */}
                     <aside className="md:w-64 shrink-0">
                         <div className="sticky top-24 space-y-1">
                             <motion.div 
@@ -290,32 +316,6 @@ export default function PeriodsPage() {
                             </nav>
                         </div>
                     </aside>
-                    
-                    {/* Main Content */}
-                    <div className="flex-1 space-y-6">
-                        <Section id="status" title="Current Status">
-                            <CurrentStatus 
-                                currentPeriod={currentPeriod}
-                                pastPeriods={pastPeriods}
-                                handleStartPeriod={handleStartPeriod}
-                                handleEndPeriod={handleEndPeriod}
-                                loading={loading}
-                            />
-                        </Section>
-                        
-                        <Section id="history" title="Period History">
-                            <PeriodHistory pastPeriods={pastPeriods} />
-                        </Section>
-                        
-                        <Section id="symptoms" title="Symptom Tracking">
-                            <SymptomTracking 
-                                symptoms={symptoms}
-                                setSymptoms={setSymptoms}
-                                loading={loading}
-                                setLoading={setLoading}
-                            />
-                        </Section>
-                    </div>
                 </div>
             </main>
         </div>
