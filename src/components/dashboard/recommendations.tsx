@@ -1,16 +1,16 @@
 type RecommendationsProps = {
   recommendations: {
     nutrition: {
-      foods_to_emphasize: string[];
-      foods_to_minimize: string[];
-      nutrients_to_focus_on: string[];
+      foodsToEmphasize: string[];
+      foodsToMinimize: string[];
+      nutrientsToFocusOn: string[];
     };
     exercise: {
-      recommended_types: string[];
-      intensity_level: string;
-      exercises_to_avoid: string[];
+      recommendedTypes: string[];
+      intensityLevel: string;
+      exercisesToAvoid: string[];
     };
-    self_care: {
+    selfCare: {
       physical: string[];
       emotional: string[];
       sleep: string[];
@@ -27,14 +27,14 @@ export default function RecommendationsList({ recommendations, phase }: Recommen
         <div className="text-sm space-y-2">
           <p className="font-medium text-xs text-purple-700">Foods to Emphasize:</p>
           <ul className="list-disc pl-5">
-            {recommendations.nutrition.foods_to_emphasize.slice(0, 3).map((item, i) => (
+            {recommendations.nutrition.foodsToEmphasize.slice(0, 3).map((item, i) => (
               <li key={i}>{item}</li>
             ))}
           </ul>
           
           <p className="font-medium text-xs text-purple-700 mt-2">Key Nutrients:</p>
           <ul className="list-disc pl-5">
-            {recommendations.nutrition.nutrients_to_focus_on.slice(0, 3).map((item, i) => (
+            {recommendations.nutrition.nutrientsToFocusOn.slice(0, 3).map((item, i) => (
               <li key={i}>{item}</li>
             ))}
           </ul>
@@ -43,9 +43,9 @@ export default function RecommendationsList({ recommendations, phase }: Recommen
       
       <div>
         <h3 className="font-semibold mb-1">Exercise</h3>
-        <p className="text-xs text-gray-500 mb-1">Recommended Intensity: {recommendations.exercise.intensity_level}</p>
+        <p className="text-xs text-gray-500 mb-1">Recommended Intensity: {recommendations.exercise.intensityLevel}</p>
         <ul className="list-disc pl-5 text-sm">
-          {recommendations.exercise.recommended_types.slice(0, 3).map((item, i) => (
+          {recommendations.exercise.recommendedTypes.slice(0, 3).map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
@@ -57,7 +57,7 @@ export default function RecommendationsList({ recommendations, phase }: Recommen
           <div>
             <p className="font-medium text-xs text-purple-700">Physical:</p>
             <ul className="list-disc pl-5">
-              {recommendations.self_care.physical.slice(0, 2).map((item, i) => (
+              {recommendations.selfCare.physical.slice(0, 2).map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
@@ -65,7 +65,7 @@ export default function RecommendationsList({ recommendations, phase }: Recommen
           <div>
             <p className="font-medium text-xs text-purple-700">Emotional:</p>
             <ul className="list-disc pl-5">
-              {recommendations.self_care.emotional.slice(0, 2).map((item, i) => (
+              {recommendations.selfCare.emotional.slice(0, 2).map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>

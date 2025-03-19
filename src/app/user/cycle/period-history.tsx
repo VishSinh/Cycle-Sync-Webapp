@@ -41,10 +41,10 @@ export default function PeriodHistory({ pastPeriods }: PeriodHistoryProps) {
         ) : (
           <div className="space-y-4">
             {pastPeriods.map((period) => (
-              <div key={period.id} className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between">
+              <div key={period.periodRecordId} className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                   <h3 className="font-medium">
-                    {formatDate(period.startDate)} - {period.endDate ? formatDate(period.endDate) : "Ongoing"}
+                    {formatDate(period.startDatetime)} - {period.endDatetime ? formatDate(period.endDatetime) : "Ongoing"}
                   </h3>
                   <p className="text-sm text-gray-500">
                     Duration: {period.durationDays || "?"} days
@@ -53,7 +53,7 @@ export default function PeriodHistory({ pastPeriods }: PeriodHistoryProps) {
                 </div>
                 <div className="mt-3 md:mt-0">
                   <Badge variant="outline" className="bg-gray-50">
-                    {timeAgo(period.startDate)}
+                    {timeAgo(period.startDatetime)}
                   </Badge>
                 </div>
               </div>

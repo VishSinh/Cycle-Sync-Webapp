@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AuthService } from "@/service/api/auth-service";
 import { Dancing_Script } from "next/font/google";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { User, LogIn, LogOut, Droplet } from "lucide-react"
 import Routes from "@/lib/routes";
 
@@ -19,6 +19,8 @@ const dancingScript = Dancing_Script({
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter(); // This uses the App Router instead of the Pages Router
+  const pathname = usePathname(); // Get current path
+  const isOnboardingPage = pathname === Routes.ONBOARDING;
 
   useEffect(() => {
     // Check authentication status on client-side
@@ -39,17 +41,23 @@ export default function Navbar() {
         </Link>
         <div className="flex items-center space-x-4">
           {isLoggedIn ? (
-            <>
-              <Link href={Routes.PROFILE}>
-                <Button variant="ghost"><User />Profile</Button>
-              </Link>
-              <Link href={Routes.CYCLE}>
-                <Button variant="ghost"><Droplet />Cycle</Button>
-              </Link>
+            isOnboardingPage ? (
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut /> Logout
               </Button>
-            </>
+            ) : (
+              <>
+                <Link href={Routes.PROFILE}>
+                  <Button variant="ghost"><User />Profile</Button>
+                </Link>
+                <Link href={Routes.CYCLE}>
+                  <Button variant="ghost"><Droplet />Cycle</Button>
+                </Link>
+                <Button variant="ghost" onClick={handleLogout}>
+                  <LogOut /> Logout
+                </Button>
+              </>
+            )
           ) : (
             <Link href={Routes.LOGIN}>
               <Button variant="ghost"><LogIn /> Login</Button>

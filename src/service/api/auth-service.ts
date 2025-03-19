@@ -18,6 +18,8 @@ export class AuthService {
 
         if (response.success && response.data) {
             this.storeAuthToken(response.data.token);
+
+            this.setOnboardingCompleted(response.data.exists)
         }
 
         return response;
@@ -29,31 +31,46 @@ export class AuthService {
             email,
             password,
         }
-        return RequestHelper.post(this.SIGNUP_URL, body);
+
+        const response = await RequestHelper.post(this.SIGNUP_URL, body);
+        
+        if (response.success && response.data) {
+            this.storeAuthToken(response.data.token);
+
+            this.setOnboardingCompleted(false);
+        }
+
+        return response;
     }
 
     public static async logout(): Promise<ApiResponse<any>> {
         this.clearAuthToken();
+        this.clearOnboardingCompleted();
         return { success: true, data: null , error: null };
     }
 
-    // ✅ Store token in cookies instead of localStorage
-    public static storeAuthToken(token: string): void {
-        Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'Strict' }); // Set token for 7 days
-    }
+    /*
+    TOKEN MANAGEMENT
+    */
+    public static storeAuthToken = (token: string): void => Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'Strict' });
+    
+    public static clearAuthToken = (): void =>  Cookies.remove('token');
+    
+    public static isLoggedIn = (): boolean =>  !!Cookies.get('token');
 
-    // ✅ Remove token from cookies on logout
-    public static clearAuthToken(): void {
-        Cookies.remove('token');
-    }
+    public static getAuthToken = (): string | null => Cookies.get('token') ?? null;
 
-    // ✅ Check if token exists in cookies
-    public static isLoggedIn(): boolean {
-        return !!Cookies.get('token');
-    }
 
-    // ✅ Retrieve token from cookies
-    public static getAuthToken(): string | null {
-        return Cookies.get('token') || null;
-    }
+    /*
+    ONBOARDING
+    */
+    public static setOnboardingCompleted = (completed: boolean): void => Cookies.set('onboarding_completed', completed.toString());
+    
+    public static isOnboardingCompleted = (): boolean => !!Cookies.get('onboarding_completed');
+
+    public static clearOnboardingCompleted = (): void => Cookies.remove('onboarding_completed');
+
+
+
+    
 }

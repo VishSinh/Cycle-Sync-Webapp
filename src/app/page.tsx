@@ -2,22 +2,15 @@
 
 import React, { useEffect, useState, Suspense, lazy } from "react";
 import Navbar from "@/components/navbar";
+import Footer from "@/components/footer";
 import CircleLoader from "react-spinners/CircleLoader";
+import HashLoader from "react-spinners/HashLoader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AuthService } from "@/service/api/auth-service";
 import { useRouter } from "next/navigation";
 import { DashoardService } from "@/service/api/dashboard-service";
 import PhaseInfo from "@/components/dashboard/phase-info";
-import LifestyleTips from "@/components/dashboard/lifestyle-tips";
-
-interface DashboardDetails {
-  currentPhase: string,
-  avgCycleLength: number,
-  nextPeriodStart: string,
-  daysUntilNextPeriod: number,
-  daysUntilNextPhase: number,
-}
+import { DashboardData, ExerciseDetailsData, HealthWarningData, LifestyleAdjustmentsData, NutritionDetailsData, PhaseInfoData, RecommendationsData } from "@/components/dashboard/interfaces";
+import { convert_phase_to_string } from "@/lib/helpers";
 
 // Define event type to ensure consistency
 type EventType = "cycle" | "exercise" | "health" | "wellness";
@@ -28,14 +21,8 @@ const RecommendationsList = lazy(() => import('@/components/dashboard/recommenda
 const RecentLogs = lazy(() => import('@/components/dashboard/recent-logs'));
 const ExerciseSection = lazy(() => import('@/components/dashboard/exercise-section'));
 const NutritionTips = lazy(() => import('@/components/dashboard/nutrition-tips'));
-const UpcomingEvents = lazy(() => import('@/components/dashboard/upcoming-events'));
 
-// Loading fallback component
-const ComponentLoader = () => (
-  <div className="w-full h-48 flex items-center justify-center bg-gray-100 rounded-md">
-    <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
-  </div>
-);
+
 
 // LazyLoad component that uses Intersection Observer with animation
 function LazyLoad({ children, id }: { children: React.ReactNode, id: string }) {
@@ -78,17 +65,16 @@ function LazyLoad({ children, id }: { children: React.ReactNode, id: string }) {
   }, [isVisible]);
 
   return (
-    <div 
-      id={id} 
+    <div
+      id={id}
       className="min-h-[100px]"
     >
       {isVisible && (
-        <div 
-          className={`transition-all duration-700 ease-out ${
-            hasLoaded 
-              ? "opacity-100 transform translate-y-0" 
+        <div
+          className={`transition-all duration-700 ease-out ${hasLoaded
+              ? "opacity-100 transform translate-y-0"
               : "opacity-0 transform translate-y-10"
-          }`}
+            }`}
         >
           <Suspense fallback={null}>
             {children}
@@ -100,250 +86,111 @@ function LazyLoad({ children, id }: { children: React.ReactNode, id: string }) {
 }
 
 export default function Dashboard() {
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [dashboardDetails, setDashboardDetails] = useState<DashboardDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [nextPeriodDate, setNextPeriodDate] = useState<Date>(new Date());
+
+  const [phaseInfo, setPhaseInfo] = useState<PhaseInfoData | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationsData | null>(null);
+  const [exerciseDetails, setExerciseDetails] = useState<ExerciseDetailsData[] | null>(null);
+  const [nutritionDetails, setNutritionDetails] = useState<NutritionDetailsData | null>(null);
+  const [lifestyleAdjustments, setLifestyleAdjustments] = useState<LifestyleAdjustmentsData | null>(null);
+  const [healthWarning, setHealthWarning] = useState<HealthWarningData | null>(null);
+
 
   // Check authentication
   useEffect(() => {
-    const checkAuth = async () => {
-      
+    var currPhase;
+    const getDashboardDetails = async () => {
+
       const response = await DashoardService.getDashboardDetails();
 
-      console.log(response.data);
-
       if (response.success) {
-        if (response.data.currentPhase == 0) {
-          response.data.currentPhase = "Menstrual";
-        }
-        else if (response.data.currentPhase == 1) {
-          response.data.currentPhase = "Follicular";
-        }
-        else if (response.data.currentPhase == 2) {
-          response.data.currentPhase = "Ovulation";
-        }
-        else if (response.data.currentPhase == 3) {
-          response.data.currentPhase = "Luteal";
+        var currPhase = response.data.currentPhase;
+
+        response.data.currentPhase = convert_phase_to_string(response.data.currentPhase);
+
+        if (response.data.nextPeriodStart) {
+          setNextPeriodDate(new Date(response.data.nextPeriodStart));
+
+          // Convert date to Month Day format
+          response.data.nextPeriodStart = new Date(response.data.nextPeriodStart).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
         }
 
-        setNextPeriodDate(new Date(response.data.nextPeriodStart));
+        setDashboardData(response.data);
 
-        // Convert date to Month Day format
-        response.data.nextPeriodStart = new Date(response.data.nextPeriodStart).toLocaleDateString('en-US', { 
-          month: 'long', 
-          day: 'numeric'
-        });
+        const detailsResponse = await DashoardService.getDashboardDetailsData(currPhase);
+        console.log(detailsResponse);
 
-        setDashboardDetails(response.data);
+        if (detailsResponse.success) {
+          setPhaseInfo(detailsResponse.data.phaseInfo);
 
-        console.log(dashboardDetails);
+          // Transform recommendations data structure to match expected format
+          // The API returns data structures that need to be transformed for the components
+          if (detailsResponse.data.recommendations) {
+            const recs = detailsResponse.data.recommendations;
+            const formattedRecs = {
+              nutrition: {
+                foodsToEmphasize: recs.nutrition?.[0].foodsToEmphasize || [],
+                foodsToMinimize: recs.nutrition?.[0]?.foodsToMinimize || [],
+                nutrientsToFocusOn: recs.nutrition?.[0]?.nutrientsToFocusOn || []
+              },
+              exercise: {
+                recommendedTypes: recs.exercise?.[0]?.recommendedTypes || [],
+                intensityLevel: recs.exercise?.[0]?.intensityLevel || '',
+                exercisesToAvoid: recs.exercise?.[0]?.exercisesToAvoid || []
+              },
+              selfCare: {
+                physical: recs.selfCare?.[0]?.physical || [],
+                emotional: recs.selfCare?.[0]?.emotional || [],
+                sleep: recs.selfCare?.[0]?.sleep || []
+              }
+            };
+            setRecommendations(formattedRecs);
+          }
+
+          setExerciseDetails(detailsResponse.data.exerciseDetails);
+
+          // Transform nutrition details to match the expected interface format
+          // if (detailsResponse.data.nutritionDetails) {
+          //   const nutr = detailsResponse.data.nutritionDetails;
+          //   const formattedNutr: NutritionDetailsData = {
+          //     keyNutrients: nutr.keyNutrients || [],
+          //     mealPlan: {
+          //       breakfastIdeas: nutr.mealPlan?.breakfastIdeas || [],
+          //       lunchIdeas: nutr.mealPlan?.lunchIdeas || [],
+          //       dinnerIdeas: nutr.mealPlan?.dinnerIdeas || [],
+          //       snackIdeas: nutr.mealPlan?.snackIdeas || []
+          //     },
+          //     hydrationTips: nutr.hydrationTips || '',
+          //     supplementRecommendations: nutr.supplementRecommendations || []
+          //   };
+          //   setNutritionDetails(formattedNutr);
+          // } else {
+          //   console.warn("Nutrition details data is missing or malformed");
+          // }
+          setNutritionDetails(detailsResponse.data.nutrientDetails);
+          setLifestyleAdjustments(detailsResponse.data.lifestyleAdjustments);
+          setHealthWarning(detailsResponse.data.healthWarning);
+        }
       }
+
       setLoading(false);
     };
 
-    checkAuth();
+    getDashboardDetails();
   }, [router]);
 
-  // Create properly structured dummy data based on the provided JSON
-  const phaseInfo = {
-    name: "Luteal Phase",
-    days_in_cycle: "Approximately days 15-28 of a 28-day cycle (can vary depending on ovulation)",
-    hormone_changes: "Progesterone levels rise significantly after ovulation. Estrogen also increases initially, then declines. If pregnancy doesn't occur, both progesterone and estrogen levels drop dramatically towards the end of the phase.",
-    common_symptoms: [
-      "Bloating", "Breast tenderness", "Mood swings", "Irritability",
-      "Anxiety", "Headaches", "Fatigue", "Changes in appetite", 
-      "Difficulty sleeping", "Acne breakouts"
-    ],
-    description: "The luteal phase begins after ovulation and lasts until the start of the next menstrual period. The dominant hormone during this phase is progesterone, which prepares the uterine lining for a potential pregnancy. If fertilization doesn't occur, hormone levels drop, leading to menstruation."
-  };
-  
-  // Format recommendations for the RecommendationsList component
-  const recommendations = {
-    nutrition: {
-      foods_to_emphasize: [
-        "Complex carbohydrates (whole grains, sweet potatoes, brown rice)",
-        "Fiber-rich foods (fruits, vegetables, beans, lentils)",
-        "Lean protein (chicken, fish, tofu, beans)",
-        "Foods rich in calcium and magnesium (leafy greens, dairy, nuts, seeds)",
-        "Healthy fats (avocados, nuts, seeds, olive oil)"
-      ],
-      foods_to_minimize: [
-        "Processed foods",
-        "Salty foods (to reduce bloating)",
-        "Sugary foods (to avoid blood sugar spikes and mood swings)",
-        "Caffeine (can exacerbate anxiety and sleep problems)",
-        "Alcohol (can worsen mood swings and fatigue)"
-      ],
-      nutrients_to_focus_on: [
-        "Vitamin B6",
-        "Magnesium",
-        "Calcium",
-        "Fiber",
-        "Omega-3 fatty acids"
-      ]
-    },
-    exercise: {
-      recommended_types: [
-        "Yoga",
-        "Pilates",
-        "Walking",
-        "Light jogging",
-        "Swimming",
-        "Strength training (lighter weights, higher reps)"
-      ],
-      intensity_level: "Moderate",
-      exercises_to_avoid: [
-        "High-intensity interval training (HIIT)",
-        "Heavy weightlifting",
-        "Excessive cardio"
-      ]
-    },
-    self_care: {
-      physical: [
-        "Take warm baths with Epsom salts",
-        "Get a massage",
-        "Use a heating pad for cramps",
-        "Stretch regularly",
-        "Practice deep breathing exercises"
-      ],
-      emotional: [
-        "Journaling",
-        "Meditation",
-        "Spending time in nature",
-        "Connecting with loved ones",
-        "Practicing mindfulness",
-        "Engaging in creative activities"
-      ],
-      sleep: [
-        "Maintain a regular sleep schedule",
-        "Create a relaxing bedtime routine",
-        "Ensure a dark, quiet, and cool sleep environment",
-        "Avoid caffeine and alcohol before bed"
-      ]
-    }
-  };
-  
-  // Exercise details with more comprehensive information
-  const exerciseDetails = [
-    {
-      name: "Yoga (Gentle Flow)",
-      description: "Gentle yoga focuses on stretching, balance, and relaxation. It involves holding poses for longer periods and emphasizes mindful breathing.",
-      benefits_during_phase: "Reduces stress, eases muscle tension, improves sleep quality, and helps with bloating and cramps.",
-      difficulty: "easy",
-      duration: "30-60 minutes",
-      modifications: "Use props like blocks and blankets for support. Modify poses as needed to accommodate discomfort or fatigue."
-    },
-    {
-      name: "Walking",
-      description: "A low-impact cardio exercise that can be easily incorporated into your daily routine.",
-      benefits_during_phase: "Boosts mood, improves circulation, reduces bloating, and helps with fatigue.",
-      difficulty: "easy",
-      duration: "30-60 minutes",
-      modifications: "Walk at a comfortable pace. Break it up into shorter walks throughout the day if needed."
-    },
-    {
-      name: "Pilates",
-      description: "A low-impact exercise that focuses on core strength, flexibility, and body awareness.",
-      benefits_during_phase: "Strengthens core muscles, improves posture, relieves back pain, and reduces stress.",
-      difficulty: "medium",
-      duration: "30-45 minutes",
-      modifications: "Focus on proper form over intensity. Modify exercises as needed to accommodate any discomfort."
-    }
-  ];
-  
-  // Enhanced nutrition details
-  const nutritionDetails = {
-    key_nutrients: [
-      {
-        nutrient: "Vitamin B6",
-        benefits_during_phase: "Helps regulate mood, reduce bloating, and alleviate breast tenderness.",
-        food_sources: [
-          "Chicken", "Fish", "Potatoes", "Bananas", "Fortified cereals"
-        ]
-      },
-      {
-        nutrient: "Magnesium",
-        benefits_during_phase: "Reduces muscle cramps, headaches, and fatigue. Helps regulate blood sugar levels.",
-        food_sources: [
-          "Leafy green vegetables", "Nuts", "Seeds", "Dark chocolate", "Avocado"
-        ]
-      },
-      {
-        nutrient: "Calcium",
-        benefits_during_phase: "May help reduce PMS symptoms such as mood swings, bloating, and fatigue.",
-        food_sources: [
-          "Dairy products", "Leafy green vegetables", "Fortified plant-based milks", "Tofu"
-        ]
-      }
-    ],
-    meal_plan: {
-      breakfast_ideas: [
-        "Oatmeal with berries and nuts",
-        "Scrambled eggs with spinach and whole-wheat toast",
-        "Greek yogurt with fruit and granola",
-        "Smoothie with spinach, banana, and protein powder"
-      ],
-      lunch_ideas: [
-        "Turkey sandwich on whole-grain bread with avocado and sprouts",
-        "Salad with grilled chicken or tofu, mixed greens, and a variety of vegetables",
-        "Leftovers from dinner",
-        "Lentil soup with a side salad"
-      ],
-      dinner_ideas: [
-        "Baked chicken breast with roasted vegetables",
-        "Salmon with quinoa and steamed asparagus",
-        "Vegetarian chili with cornbread",
-        "Turkey meatballs with zucchini noodles and marinara sauce"
-      ],
-      snack_ideas: [
-        "Trail mix with nuts, seeds, and dried fruit",
-        "Apple slices with peanut butter",
-        "Hard-boiled eggs",
-        "Greek yogurt with berries",
-        "Dark chocolate"
-      ]
-    },
-    hydration_tips: "Drink plenty of water throughout the day to stay hydrated and reduce bloating. Herbal teas like chamomile and ginger can also be beneficial.",
-    supplement_recommendations: [
-      "Vitamin B6 (consult with a doctor before taking supplements)",
-      "Magnesium (consult with a doctor before taking supplements)",
-      "Calcium (consult with a doctor before taking supplements)",
-      "Omega-3 fatty acids (consult with a doctor before taking supplements)"
-    ]
-  };
-  
-  // Lifestyle adjustments with more detailed information
-  const lifestyleAdjustments = {
-    work: [
-      "Take frequent breaks to stretch and move around",
-      "Prioritize tasks and avoid overcommitting",
-      "Communicate your needs to your colleagues",
-      "Create a calm and comfortable workspace"
-    ],
-    social: [
-      "Don't feel pressured to attend social events if you're not feeling up to it",
-      "Communicate your needs to your friends and family",
-      "Engage in activities that you enjoy and that help you relax",
-      "Set healthy boundaries"
-    ],
-    relationships: [
-      "Communicate your feelings and needs to your partner",
-      "Practice patience and understanding",
-      "Spend quality time together doing activities that you both enjoy",
-      "Seek professional help if needed"
-    ]
-  };
-  
-  // When to seek help guidelines
-  const whenToSeekHelp = [
-    "Severe PMS symptoms that interfere with daily life",
-    "Prolonged or unusually heavy menstrual bleeding",
-    "Sudden changes in mood or behavior",
-    "Persistent fatigue or exhaustion",
-    "Severe pelvic pain",
-    "Signs of depression or anxiety"
-  ];
+  // Optional: Add this effect to log state changes when they actually occur
+  useEffect(() => {
+    if (phaseInfo) console.log("Updated phaseInfo:", phaseInfo);
+    if (recommendations) console.log("Updated recommendations:", recommendations);
+    if (exerciseDetails) console.log("Updated exerciseDetails:", exerciseDetails);
+    if (nutritionDetails) console.log("Updated nutritionDetails:", nutritionDetails);
+    if (lifestyleAdjustments) console.log("Updated lifestyleAdjustments:", lifestyleAdjustments);
+    if (healthWarning) console.log("Updated healthWarning:", healthWarning);
+  }, [phaseInfo, recommendations, exerciseDetails, nutritionDetails, lifestyleAdjustments, healthWarning]);
 
   // Dummy log entries
   const recentLogs = [
@@ -358,117 +205,215 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <CircleLoader />
+        <CircleLoader size={50} color="#8b5cf6" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      
+
       {/* Main content */}
-      <main className="container mx-auto pt-24 pb-12 px-4">
+      <main className="container mx-auto pt-24 pb-12 px-4 flex-grow">
 
         {/* Stats cards - DO NOT MODIFY */}
-        <LazyLoad id = "stats-cards">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Current Phase</CardTitle>
-              <CardDescription>Your menstrual cycle status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{dashboardDetails?.currentPhase}</div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {dashboardDetails?.daysUntilNextPhase} days until next phase
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Cycle Length</CardTitle>
-              <CardDescription>Your average cycle duration</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="text-3xl font-bold">{dashboardDetails?.avgCycleLength}</div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Based on your last cycles
-              </p>
-            </CardContent>
+        <LazyLoad id="stats-cards">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="overflow-hidden border-gray-200 shadow-sm relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 rounded-lg"></div>
+              <div className="absolute top-0 left-0 h-1 w-full bg-purple-400 rounded-t"></div>
+              <CardHeader className="pb-2 relative z-10">
+                <CardTitle className="flex items-center">
+                  <span className="mr-2 text-purple-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                  </span>
+                  Current Phase
+                </CardTitle>
+                <CardDescription>Your menstrual cycle status</CardDescription>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <div className="text-3xl font-bold text-gray-800">{dashboardData?.currentPhase}</div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {dashboardData?.daysUntilNextPhase} days until next phase
+                </p>
+              </CardContent>
             </Card>
-            
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Next Period</CardTitle>
-              <CardDescription>Estimated start date</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="text-3xl font-bold">{dashboardDetails?.nextPeriodStart}</div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {dashboardDetails?.daysUntilNextPeriod} days from today
-              </p>
-            </CardContent>
-          </Card>
+
+            <Card className="overflow-hidden border-gray-200 shadow-sm relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 rounded-lg"></div>
+              <div className="absolute top-0 left-0 h-1 w-full bg-teal-400 rounded-t"></div>
+              <CardHeader className="pb-2 relative z-10">
+                <CardTitle className="flex items-center">
+                  <span className="mr-2 text-teal-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </span>
+                  Cycle Length
+                </CardTitle>
+                <CardDescription>Your average cycle duration</CardDescription>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                {
+                  dashboardData && dashboardData.avgCycleLength ?
+                    <>
+                      <div className="text-3xl font-bold text-gray-800">{dashboardData?.avgCycleLength}</div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Based on your last cycles
+                      </p>
+                    </>
+                    :
+                    <div className="flex flex-col items-center text-center py-2">
+                      <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      <p className="text-base text-gray-700 font-medium">No cycle data yet</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Log at least 2 cycles to calculate your average
+                      </p>
+                    </div>
+                }
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-gray-200 shadow-sm relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 rounded-lg"></div>
+              <div className="absolute top-0 left-0 h-1 w-full bg-rose-400 rounded-t"></div>
+              <CardHeader className="pb-2 relative z-10">
+                <CardTitle className="flex items-center">
+                  <span className="mr-2 text-rose-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </span>
+                  Next Period
+                </CardTitle>
+                <CardDescription>Estimated start date</CardDescription>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                {
+                  dashboardData && dashboardData.nextPeriodStart ?
+                    <>
+                      <div className="text-3xl font-bold text-gray-800">{dashboardData?.nextPeriodStart}</div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {dashboardData?.daysUntilNextPeriod} days from today
+                      </p>
+                    </>
+                    :
+                    <div className="flex flex-col items-center text-center py-2">
+                      <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="text-base text-gray-700 font-medium">Prediction unavailable</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Continue tracking to get period predictions
+                      </p>
+                    </div>
+                }
+              </CardContent>
+            </Card>
           </div>
-          </LazyLoad>
+        </LazyLoad>
 
         {/* Chart section (lazy loaded) - DO NOT MODIFY */}
         <LazyLoad id="cycle-chart">
-          <CycleChart
-            currentPhase={dashboardDetails?.currentPhase}
-            daysUntilNextPhase={dashboardDetails?.daysUntilNextPhase}
-            cycleLength={dashboardDetails?.avgCycleLength}
-            nextPeriodDate={nextPeriodDate}
-          />
+          {dashboardData ?
+            <CycleChart
+              currentPhase={dashboardData?.currentPhase}
+              daysUntilNextPhase={dashboardData?.daysUntilNextPhase}
+              cycleLength={dashboardData?.avgCycleLength ?? 28}
+              nextPeriodDate={nextPeriodDate}
+              lastPeriodStart={new Date(dashboardData?.lastPeriodStart)}
+            />
+            :
+            <Card>
+              <CardHeader>
+                <CardTitle>Menstrual Cycle Chart</CardTitle>
+                <CardDescription>Track your cycle phases</CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center py-6">
+                <HashLoader size={30} color="#8b5cf6" />
+              </CardContent>
+            </Card>
+          }
         </LazyLoad>
-        
+
         {/* Main recommendations grid */}
         <LazyLoad id="recommendations-grid">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          {/* Recommendations section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Phase-based Recommendations</CardTitle>
-              <CardDescription>Optimized for your {dashboardDetails?.currentPhase} phase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LazyLoad id="recommendations-list">
-                <RecommendationsList
-                  recommendations={recommendations}
-                  phase={dashboardDetails?.currentPhase}
-                />
-              </LazyLoad>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            {/* Recommendations section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Phase-based Recommendations</CardTitle>
+                <CardDescription>Optimized for your {dashboardData?.currentPhase} phase</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LazyLoad id="recommendations-list">
+                  {recommendations ? (
+                    <RecommendationsList
+                      recommendations={recommendations}
+                      phase={dashboardData?.currentPhase}
+                    />
+                  ) : (
+                    <div className="flex justify-center py-4">
+                      <HashLoader size={30} color="#8b5cf6" />
+                    </div>
+                  )}
+                </LazyLoad>
+              </CardContent>
+            </Card>
 
-          {/* Exercise section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Exercise Tips</CardTitle>
-              <CardDescription>Workouts for your current phase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LazyLoad id="exercise-section">
-                <ExerciseSection 
-                  phase={dashboardDetails?.currentPhase}
-                  exerciseDetails={exerciseDetails}
-                />
-              </LazyLoad>
-            </CardContent>
-          </Card>
-        </div>
+            {/* Exercise section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Exercise Tips</CardTitle>
+                <CardDescription>Workouts for your current phase</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LazyLoad id="exercise-section">
+                  {exerciseDetails ? (
+                    <ExerciseSection
+                      phase={dashboardData?.currentPhase}
+                      exerciseDetails={exerciseDetails}
+                    />
+                  ) : (
+                    <div className="flex justify-center py-4">
+                      <HashLoader size={30} color="#8b5cf6" />
+                    </div>
+                  )}
+                </LazyLoad>
+              </CardContent>
+            </Card>
+          </div>
         </LazyLoad>
 
         {/* Nutrition section */}
         <div className="mt-8">
           <LazyLoad id="nutrition-tips">
-            <NutritionTips 
-              phase={dashboardDetails?.currentPhase}
-              nutritionDetails={nutritionDetails}
-            />
+            {nutritionDetails ? (
+              <NutritionTips
+                phase={dashboardData?.currentPhase}
+                nutritionDetails={nutritionDetails}
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nutrition for {dashboardData?.currentPhase} Phase</CardTitle>
+                  <CardDescription>Dietary recommendations</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center py-6">
+                  <HashLoader size={30} color="#8b5cf6" />
+                </CardContent>
+              </Card>
+            )}
           </LazyLoad>
         </div>
 
@@ -478,32 +423,20 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Self-Care Practices</CardTitle>
-                <CardDescription>Support your body during the {dashboardDetails?.currentPhase} phase</CardDescription>
+                <CardDescription>Support your body during the {dashboardData?.currentPhase} phase</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <h3 className="font-medium text-purple-700 mb-2">Physical Self-Care</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      {recommendations.self_care.physical.map((item, i) => (
+                      {recommendations?.selfCare?.physical?.map((item, i) => (
                         <li key={i} className="text-sm">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-purple-700 mb-2">Emotional Well-being</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {recommendations.self_care.emotional.map((item, i) => (
-                        <li key={i} className="text-sm">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-purple-700 mb-2">Sleep Optimization</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {recommendations.self_care.sleep.map((item, i) => (
-                        <li key={i} className="text-sm">{item}</li>
-                      ))}
+                      )) || (
+                        <div className="flex justify-center py-4">
+                          <HashLoader size={25} color="#8b5cf6" />
+                        </div>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -512,17 +445,22 @@ export default function Dashboard() {
           </LazyLoad>
         </div>
 
-        {/* Recent logs */}
-        <div className="mt-8">
-          <LazyLoad id="recent-logs">
-            <RecentLogs logs={recentLogs} />
-          </LazyLoad>
-        </div>
-
         {/* Phase Info Section */}
         <div className="mt-8">
           <LazyLoad id="phase-info">
-            <PhaseInfo phaseInfo={phaseInfo} />
+            {phaseInfo ? (
+              <PhaseInfo phaseInfo={phaseInfo} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Your Current Phase</CardTitle>
+                  <CardDescription>Understanding your cycle</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center py-6">
+                  <HashLoader size={30} color="#8b5cf6" />
+                </CardContent>
+              </Card>
+            )}
           </LazyLoad>
         </div>
 
@@ -532,56 +470,72 @@ export default function Dashboard() {
             <Card>
               <CardHeader className="border-b">
                 <CardTitle>Lifestyle Adjustments</CardTitle>
-                <CardDescription>Making your daily life easier during your {dashboardDetails?.currentPhase} phase</CardDescription>
+                <CardDescription>Making your daily life easier during your {dashboardData?.currentPhase} phase</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Work & Productivity</h3>
                     <ul className="space-y-2">
-                      {lifestyleAdjustments.work.map((tip, i) => (
+                      {lifestyleAdjustments?.work?.map((tip, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-purple-600 mr-2">•</span>
                           <span className="text-sm">{tip}</span>
                         </li>
-                      ))}
+                      )) || (
+                        <div className="flex justify-center py-4">
+                          <HashLoader size={25} color="#8b5cf6" />
+                        </div>
+                      )}
                     </ul>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Social Life</h3>
                     <ul className="space-y-2">
-                      {lifestyleAdjustments.social.map((tip, i) => (
+                      {lifestyleAdjustments?.social?.map((tip, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-purple-600 mr-2">•</span>
                           <span className="text-sm">{tip}</span>
                         </li>
-                      ))}
+                      )) || (
+                        <div className="flex justify-center py-4">
+                          <HashLoader size={25} color="#8b5cf6" />
+                        </div>
+                      )}
                     </ul>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Relationships</h3>
                     <ul className="space-y-2">
-                      {lifestyleAdjustments.relationships.map((tip, i) => (
+                      {lifestyleAdjustments?.relationships?.map((tip, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-purple-600 mr-2">•</span>
                           <span className="text-sm">{tip}</span>
                         </li>
-                      ))}
+                      )) || (
+                        <div className="flex justify-center py-4">
+                          <HashLoader size={25} color="#8b5cf6" />
+                        </div>
+                      )}
                     </ul>
                   </div>
                 </div>
-                
+
                 <div className="mt-8 bg-red-50 p-4 rounded-md border border-red-100">
                   <h3 className="text-lg font-semibold text-red-800 mb-3">When to Seek Help</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {whenToSeekHelp.map((item, i) => (
+                    {healthWarning?.whenToSeekHelp?.map((item, i) => (
                       <div key={i} className="flex items-start">
                         <span className="text-red-500 mr-2">⚠️</span>
                         <span className="text-sm text-red-800">{item}</span>
                       </div>
-                    ))}
+                    )) || (
+                      <div className="flex justify-center py-4 col-span-2">
+                        <HashLoader size={25} color="#ef4444" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -589,6 +543,9 @@ export default function Dashboard() {
           </LazyLoad>
         </div>
       </main>
+
+      {/* Add Footer component */}
+      <Footer />
     </div>
   );
 }

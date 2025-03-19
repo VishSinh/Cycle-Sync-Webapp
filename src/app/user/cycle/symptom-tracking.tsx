@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Symptom } from "@/app/user/cycle/page"
-import { SymptomService } from "./mock-service";
+import { CycleService } from "@/service/api/cycle-serice";
+import { apiWrapper } from "@/lib/api-wrapper";
+import logger from "@/lib/logger";
+// import { SymptomService } from "./mock-service";
 
 // Symptom options
 const symptomTypes = [
   "Cramps", "Headache", "Bloating", "Fatigue", 
   "Mood swings", "Breast tenderness", "Acne", "Back pain",
-  "Nausea", "Food cravings", "Insomnia"
+  "Nausea", "Food cravings", "Insomnia", "Other"
 ];
 
 // Helper function to format dates
@@ -29,7 +32,9 @@ const formatDate = (dateString: string): string => {
 
 // Get severity label
 const getSeverityLabel = (severity: number) => {
+  
   switch (severity) {
+
     case 1: return "Mild";
     case 2: return "Moderate";
     case 3: return "Severe";
@@ -56,35 +61,29 @@ export default function SymptomTracking({ symptoms, setSymptoms, loading, setLoa
   // Add new symptom
   const handleAddSymptom = async () => {
     setLoading(true);
-    
-    try {
-      // API call to add symptom
-      const response = await SymptomService.addSymptom({
-        type: newSymptom.type,
-        severity: Number(newSymptom.severity),
-        date: newSymptom.date,
-        notes: newSymptom.notes || null
+
+    const { response, error } = await apiWrapper(
+      () => CycleService.createSymptom(Number(newSymptom.severity), newSymptom.date, newSymptom.type, newSymptom.notes),
+      { showToast: true, errorMessage: "Error adding symptom" }
+    )
+
+    logger.info("Symptom added", response);
+
+    if (response.success) {
+      setSymptoms([(response.data), ...symptoms]);
+
+      setNewSymptom({
+        type: "Cramps",
+        severity: 2,
+        notes: "",
+        date: format(new Date(), "yyyy-MM-dd")
       });
-      
-      if (response.success) {
-        // Add new symptom to the list
-        setSymptoms([response.data, ...symptoms]);
-        
-        // Reset form
-        setNewSymptom({
-          type: "Cramps",
-          severity: 2,
-          notes: "",
-          date: format(new Date(), "yyyy-MM-dd")
-        });
-        
-        setDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error adding symptom:", error);
-    } finally {
-      setLoading(false);
+
+
+      setDialogOpen(false);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -202,7 +201,7 @@ export default function SymptomTracking({ symptoms, setSymptoms, loading, setLoa
         ) : (
           <div className="space-y-4">
             {symptoms.map((symptom) => (
-              <div key={symptom.id} className="border rounded-lg p-4">
+              <div key={symptom.symptomId} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center">
                     <Badge className={`mr-2 ${
@@ -212,17 +211,23 @@ export default function SymptomTracking({ symptoms, setSymptoms, loading, setLoa
                     }`}>
                       {getSeverityLabel(symptom.severity)}
                     </Badge>
-                    <h3 className="font-medium">{symptom.type}</h3>
+                    <h3 className="font-medium">{symptom.symptom}</h3>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {formatDate(symptom.date)}
+                    {formatDate(symptom.createdDatetime)}
                   </Badge>
                 </div>
 
-                {symptom.notes && (
+                {symptom.comments && (
                   <p className="text-sm text-gray-600 mt-2">
-                    {symptom.notes}
+                    {symptom.comments}
                   </p>
+                )}
+
+                {symptom.periodRecordId && (
+                  <Badge variant="outline" className="text-xs mt-2">
+                    Symptom occurred during period
+                  </Badge>
                 )}
               </div>
             ))}

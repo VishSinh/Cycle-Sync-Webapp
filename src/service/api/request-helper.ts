@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { AuthService } from '@/service/api/auth-service';
 import { NextResponse } from 'next/server';
 import Routes from '@/lib/routes';
+import logger from '@/lib/logger';
 
 export interface RequestOptions {
     url: string;
@@ -56,6 +57,13 @@ export class RequestHelper {
         const snakeCaseBody = body ? this.convertKeysToSnakeCase(body) : body;
         const snakeCaseParams = params ? this.convertKeysToSnakeCase(params) : params;
 
+        // logger.info('Making API request', {
+        //     url: this.getFullUrl(url),
+        //     method,
+        //     body: snakeCaseBody,
+        //     params: snakeCaseParams,
+        // });
+
         const config: AxiosRequestConfig = {
             url: this.getFullUrl(url),
             method,
@@ -98,7 +106,7 @@ export class RequestHelper {
             const axiosError = error as AxiosError;
 
             // Log the error (consider using a logging service in production)
-            console.error('API request failed:', {
+            console.log('API request failed:', {
                 url: config.url,
                 method: config.method,
                 status: axiosError.response?.status,

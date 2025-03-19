@@ -8,5 +8,20 @@ const toCamelCase = (obj: Record<string, any>): Record<string, any> => {
       return acc;
     }, {} as Record<string, any>);
 };
+
+const convert_phase_to_string = (phase: Number): string => {
+  switch(phase) {
+    case 0:
+      return "Menstrual";
+    case 1:
+      return "Follicular";
+    case 2:
+      return "Ovulation";
+    case 3:
+      return "Luteal";
+    default:
+      return "--";
+  }
+}
   
-export { toCamelCase };
+export { toCamelCase, convert_phase_to_string };
