@@ -27,7 +27,7 @@ export interface ApiResponse<T = any> {
 
 export class RequestHelper {
     private static readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
-    private static readonly BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://0.0.0.0:8000/api/v1/';
+    private static readonly BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     /**
      * Makes an HTTP request with provided options
