@@ -1,17 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cycle Sync - Personalized Menstrual Cycle Tracking Web Application
+
+<!-- ![Cycle Sync](https://img.shields.io/badge/Cycle%20Sync-Menstrual%20Tracking-purple)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![React](https://img.shields.io/badge/React-Latest-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) -->
+
+Cycle Sync is a comprehensive web application designed to help users track, understand, and optimize their lives around their menstrual cycle. The app provides personalized recommendations for nutrition, exercise, and self-care based on the current phase of the user's cycle.
+
+## Features
+
+### 🩸 Cycle Tracking
+- **Period Monitoring**: Start and end period tracking with detailed history
+- **Cycle Phase Detection**: Automatically identifies your current cycle phase
+- **Prediction Algorithm**: Predicts upcoming periods based on your historical data
+
+### 📊 Personalized Dashboard
+- **Current Phase Overview**: Visual representation of your current cycle phase
+- **Interactive Cycle Chart**: Navigate through your cycle with our intuitive chart
+- **Key Stats**: View average cycle length and period duration at a glance
+
+### 🧠 Symptom Tracking
+- **Symptom Logging**: Record and monitor symptoms throughout your cycle
+- **Severity Rating**: Track symptom intensity to identify patterns
+- **Historical Data**: Review past symptoms to understand your unique patterns
+
+### 🥗 Phase-Based Recommendations
+- **Nutrition Guidance**: Personalized food recommendations for each phase
+- **Exercise Tips**: Optimal workout types and intensities based on your current phase
+- **Self-Care Practices**: Physical and emotional self-care suggestions
+
+### 👤 User Profile Management
+- **Personal Information**: Manage your personal details
+- **Health Metrics**: Track relevant health data
+- **Account Settings**: Customize your experience
+
+## Technologies
+
+### Frontend
+- **Next.js 14**: React framework with server-side rendering and app router
+- **React**: JavaScript library for building user interfaces
+- **TypeScript**: Static type-checking for JavaScript
+- **Tailwind CSS**: Utility-first CSS framework
+- **Shadcn UI**: Accessible and customizable component library
+- **Tanstack Query**: Data fetching and state management
+- **React Hook Form**: Form validation and handling
+- **Chart.js**: Interactive data visualization
+
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 16.8.0 or later
+- npm, yarn, pnpm, or bun
 
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/cycle-sync-webapp.git
+cd cycle-sync-webapp
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Run the development server:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -20,17 +77,32 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+cycle-sync-webapp/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                  # Dashboard page
+│   │   ├── auth/                     # Authentication pages
+│   │   ├── onboarding/               # User onboarding flow
+│   │   └── user/
+│   │       ├── cycle/                # Cycle tracking features
+│   │       └── profile/              # User profile management
+│   ├── components/
+│   │   ├── dashboard/                # Dashboard components
+│   │   ├── ui/                       # Reusable UI components
+│   │   ├── navbar.tsx                # Navigation bar
+│   │   └── footer.tsx                # Footer component
+│   ├── lib/
+│   │   ├── api-wrapper.ts            # API handling utilities
+│   │   ├── helpers.ts                # Helper functions
+│   │   ├── routes.ts                 # Application routes
+│   │   └── utils.ts                  # Utility functions
+│   └── service/
+│       └── api/                      # API services
+├── public/                           # Static files
+└── README.md                         # Project documentation
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
