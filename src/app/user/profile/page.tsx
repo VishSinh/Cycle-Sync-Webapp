@@ -4,13 +4,11 @@ import React, { useEffect, useState } from "react";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AuthService } from "@/service/api/auth-service";
 import { useRouter } from "next/navigation";
 import CircleLoader from "react-spinners/CircleLoader";
 import { UserService } from "@/service/api/user-service";
 import { useInView } from "react-intersection-observer";
 import { motion } from "framer-motion";
-import Routes from "@/lib/routes";
 
 // Import components
 import PersonalInformation from "./personal-information";

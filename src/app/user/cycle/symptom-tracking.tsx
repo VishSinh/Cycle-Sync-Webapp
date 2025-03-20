@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +62,7 @@ export default function SymptomTracking({ symptoms, setSymptoms, loading, setLoa
   const handleAddSymptom = async () => {
     setLoading(true);
 
-    const { response, error } = await apiWrapper(
+    const { response, error: _ } = await apiWrapper(
       () => CycleService.createSymptom(Number(newSymptom.severity), newSymptom.date, newSymptom.type, newSymptom.notes),
       { showToast: true, errorMessage: "Error adding symptom" }
     )

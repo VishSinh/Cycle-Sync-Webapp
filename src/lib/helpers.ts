@@ -9,7 +9,7 @@ const toCamelCase = (obj: Record<string, any>): Record<string, any> => {
     }, {} as Record<string, any>);
 };
 
-const convert_phase_to_string = (phase: Number): string => {
+const convert_phase_to_string = (phase: number): string => {
   switch(phase) {
     case 0:
       return "Menstrual";

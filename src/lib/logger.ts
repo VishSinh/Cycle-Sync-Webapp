@@ -23,7 +23,7 @@ const logger = {
     
     if (isServer) {
       // If running on server, log directly to terminal
-      console.log(`[${level}]`, message, details || '');
+      // console.log(`[${level}]`, message, details || '');
       return true;
     } else {
       // If running on client, send to API endpoint
@@ -37,7 +37,7 @@ const logger = {
       } catch (error) {
         // Fallback to client console
         console.error('Failed to send log to server:', error);
-        console.log(`[${level}]`, message, details || '');
+        // console.log(`[${level}]`, message, details || '');
         return false;
       }
     }

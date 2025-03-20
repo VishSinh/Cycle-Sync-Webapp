@@ -52,7 +52,7 @@ export class AuthService {
     /*
     TOKEN MANAGEMENT
     */
-    public static storeAuthToken = (token: string): void => Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'Strict' });
+    public static storeAuthToken = (token: string): string | undefined => Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'Strict' });
     
     public static clearAuthToken = (): void =>  Cookies.remove('token');
     
@@ -64,7 +64,7 @@ export class AuthService {
     /*
     ONBOARDING
     */
-    public static setOnboardingCompleted = (completed: boolean): void => Cookies.set('onboarding_completed', completed.toString());
+    public static setOnboardingCompleted = (completed: boolean): string | undefined => Cookies.set('onboarding_completed', completed.toString());
     
     public static isOnboardingCompleted = (): boolean => !!Cookies.get('onboarding_completed');
 

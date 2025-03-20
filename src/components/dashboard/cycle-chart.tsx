@@ -63,7 +63,6 @@ export default function CycleChart({
 
   // Calculate the days for each phase based on total cycle length
   const phaseDays = useMemo(() => {
-    console.log("cycleLength", cycleLength);
     if (!cycleLength) return null;
     
     const totalDefaultDays = Object.values(defaultPhaseLengths).reduce((a, b) => a + b, 0);
@@ -89,7 +88,6 @@ export default function CycleChart({
 
   // Calculate next phase dates - with special handling for luteal phase if we know the next period date
   const phaseStartDates = useMemo(() => {
-    console.log(lastPeriodStart, phaseDays);
     if (!lastPeriodStart || !phaseDays) return null;
     
     let currentDate = lastPeriodStart;

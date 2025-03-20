@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { format, differenceInDays, addDays } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, Info, Calendar, Clock, CalendarCheck } from "lucide-react";
 import { CurrentStatusData, PeriodRecord } from "@/app/user/cycle/page"
 

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { differenceInDays } from "date-fns";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { toast, Toaster } from "sonner";
+import { Toaster } from "sonner";
 import { apiWrapper } from '@/lib/api-wrapper';
 
 // Service imports
@@ -89,7 +89,7 @@ export default function PeriodsPage() {
 
     useEffect(() => {
         const getUserDetails = async () => {
-            const { response, error } = await apiWrapper(
+            const { response, error: _ } = await apiWrapper(
                 () => CycleService.getCurrentStatus(),
                 {
                     showToast: true,
@@ -121,8 +121,7 @@ export default function PeriodsPage() {
         const handleScroll = () => {
             const sections = ["status", "history", "symptoms"];
             const viewportHeight = window.innerHeight;
-            const scrollPosition = window.scrollY;
-
+            
             // Calculate which section occupies most of the viewport
             let maxVisibleSection = "";
             let maxVisibleArea = 0;
@@ -171,7 +170,7 @@ export default function PeriodsPage() {
     const fetchCurrentPeriod = async (periodId: string | null) => {
         if (!periodId) return;
 
-        const { response, error } = await apiWrapper(
+        const { response, error: _ } = await apiWrapper(
             () => CycleService.getPeriodRecordDetails(periodId),
             { showToast: true, errorMessage: "Failed to load current period data" }
         );
@@ -184,7 +183,7 @@ export default function PeriodsPage() {
 
     // Fetch past periods
     const fetchPastPeriods = async () => {
-        const { response, error } = await apiWrapper(
+        const { response, error: _ } = await apiWrapper(
             () => CycleService.getPeriodRecords(),
             {
                 showToast: true,
@@ -200,7 +199,7 @@ export default function PeriodsPage() {
 
     // Fetch symptoms
     const fetchSymptoms = async () => {
-        const { response, error } = await apiWrapper(
+        const { response, error: _ } = await apiWrapper(
             () => CycleService.getSymptoms(),
             {
                 showToast: true,
@@ -224,7 +223,7 @@ export default function PeriodsPage() {
     const handleStartPeriod = async () => {
         setLoading(true);
 
-        const { response, error } = await apiWrapper(
+        const { response, error: _ } = await apiWrapper(
             () => CycleService.creatPeriodStartEvent(),
             {
                 showToast: true,
@@ -254,7 +253,7 @@ export default function PeriodsPage() {
         if (!currentPeriod) return;
         setLoading(true);
 
-        const { response, error } = await apiWrapper(
+        const { response, error: _ } = await apiWrapper(
             () => CycleService.creatPeriodEndEvent(),
             {
                 showToast: true,

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, setHours, setMinutes, setSeconds } from "date-fns";
 import CircleLoader from "react-spinners/CircleLoader";
 import { UserService } from "@/service/api/user-service";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import logger from "@/lib/logger";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
 
@@ -154,7 +152,7 @@ export default function OnboardingPage() {
                     <Card className="w-full max-w-xl mx-auto shadow-lg border-white bg-white/80 backdrop-blur-sm">
                         <CardHeader className="text-center">
                             {/* <CardTitle className="text-2xl font-bold text-purple-800">Welcome to CycleSync</CardTitle> */}
-                            <CardDescription>Let's personalize your experience</CardDescription>
+                            <CardDescription>Let&apos;s personalize your experience</CardDescription>
                         </CardHeader>
 
                         <CardContent>

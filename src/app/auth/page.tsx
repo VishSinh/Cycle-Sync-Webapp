@@ -37,7 +37,7 @@ export default function AuthPage() {
         : await AuthService.signup(email, password);
 
       if (response.success) {
-        console.log(`${type === "login" ? "Login" : "Signup"} successful!`);
+        // console.log(`${type === "login" ? "Login" : "Signup"} successful!`);
         router.push("/");
       } else {
         setError(response.error?.details || `${type === "login" ? "Login" : "Signup"} failed. Please try again.`);
@@ -200,7 +200,7 @@ export default function AuthPage() {
                 </CardContent>
                 <CardFooter className="flex justify-center">
                   <p className="text-sm text-gray-600">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{` `}
                     <button
                       onClick={() => {
                         setActiveTab("signup");

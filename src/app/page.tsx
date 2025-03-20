@@ -12,13 +12,10 @@ import PhaseInfo from "@/components/dashboard/phase-info";
 import { DashboardData, ExerciseDetailsData, HealthWarningData, LifestyleAdjustmentsData, NutritionDetailsData, PhaseInfoData, RecommendationsData } from "@/components/dashboard/interfaces";
 import { convert_phase_to_string } from "@/lib/helpers";
 
-// Define event type to ensure consistency
-type EventType = "cycle" | "exercise" | "health" | "wellness";
 
 // Lazy loaded components
 const CycleChart = lazy(() => import('@/components/dashboard/cycle-chart'));
 const RecommendationsList = lazy(() => import('@/components/dashboard/recommendations'));
-const RecentLogs = lazy(() => import('@/components/dashboard/recent-logs'));
 const ExerciseSection = lazy(() => import('@/components/dashboard/exercise-section'));
 const NutritionTips = lazy(() => import('@/components/dashboard/nutrition-tips'));
 
@@ -101,13 +98,12 @@ export default function Dashboard() {
 
   // Check authentication
   useEffect(() => {
-    var currPhase;
     const getDashboardDetails = async () => {
 
       const response = await DashoardService.getDashboardDetails();
 
       if (response.success) {
-        var currPhase = response.data.currentPhase;
+        const currPhase = response.data.currentPhase;
 
         response.data.currentPhase = convert_phase_to_string(response.data.currentPhase);
 
@@ -121,7 +117,6 @@ export default function Dashboard() {
         setDashboardData(response.data);
 
         const detailsResponse = await DashoardService.getDashboardDetailsData(currPhase);
-        console.log(detailsResponse);
 
         if (detailsResponse.success) {
           setPhaseInfo(detailsResponse.data.phaseInfo);
@@ -182,24 +177,16 @@ export default function Dashboard() {
     getDashboardDetails();
   }, [router]);
 
-  // Optional: Add this effect to log state changes when they actually occur
-  useEffect(() => {
-    if (phaseInfo) console.log("Updated phaseInfo:", phaseInfo);
-    if (recommendations) console.log("Updated recommendations:", recommendations);
-    if (exerciseDetails) console.log("Updated exerciseDetails:", exerciseDetails);
-    if (nutritionDetails) console.log("Updated nutritionDetails:", nutritionDetails);
-    if (lifestyleAdjustments) console.log("Updated lifestyleAdjustments:", lifestyleAdjustments);
-    if (healthWarning) console.log("Updated healthWarning:", healthWarning);
-  }, [phaseInfo, recommendations, exerciseDetails, nutritionDetails, lifestyleAdjustments, healthWarning]);
+  // // Optional: Add this effect to log state changes when they actually occur
+  // useEffect(() => {
+  //   if (phaseInfo) console.log("Updated phaseInfo:", phaseInfo);
+  //   if (recommendations) console.log("Updated recommendations:", recommendations);
+  //   if (exerciseDetails) console.log("Updated exerciseDetails:", exerciseDetails);
+  //   if (nutritionDetails) console.log("Updated nutritionDetails:", nutritionDetails);
+  //   if (lifestyleAdjustments) console.log("Updated lifestyleAdjustments:", lifestyleAdjustments);
+  //   if (healthWarning) console.log("Updated healthWarning:", healthWarning);
+  // }, [phaseInfo, recommendations, exerciseDetails, nutritionDetails, lifestyleAdjustments, healthWarning]);
 
-  // Dummy log entries
-  const recentLogs = [
-    { date: "March 15", symptom: "Energy levels high", mood: "Optimistic", notes: "Productive day at work" },
-    { date: "March 14", symptom: "Mild cramps", mood: "Focused", notes: "Started new project" },
-    { date: "March 13", symptom: "None", mood: "Energetic", notes: "Went for a long walk" },
-    { date: "March 12", symptom: "Slight headache", mood: "Calm", notes: "Meditation session helped" },
-    { date: "March 11", symptom: "Bloating", mood: "Irritable", notes: "Stressful day" },
-  ];
 
   // Show loader while checking authentication
   if (loading) {

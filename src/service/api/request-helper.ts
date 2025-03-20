@@ -1,8 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { AuthService } from '@/service/api/auth-service';
-import { NextResponse } from 'next/server';
 import Routes from '@/lib/routes';
-import logger from '@/lib/logger';
 
 export interface RequestOptions {
     url: string;
@@ -106,12 +104,12 @@ export class RequestHelper {
             const axiosError = error as AxiosError;
 
             // Log the error (consider using a logging service in production)
-            console.log('API request failed:', {
-                url: config.url,
-                method: config.method,
-                status: axiosError.response?.status,
-                error: axiosError.message,
-            });
+            // console.log('API request failed:', {
+            //     url: config.url,
+            //     method: config.method,
+            //     status: axiosError.response?.status,
+            //     error: axiosError.message,
+            // });
 
             // Handle 401 Unauthorized errors
             if (axiosError.response?.status === 401) {
@@ -250,7 +248,6 @@ export class RequestHelper {
             
             let code = `HTTP_${status}`;
             let errorMessage = message;
-            let details = '';
             
             switch (status) {
                 case 400:
