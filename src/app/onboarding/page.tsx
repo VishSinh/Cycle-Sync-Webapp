@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
+import Routes from "@/lib/routes";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -118,7 +119,8 @@ export default function OnboardingPage() {
             );
 
             if (response.success) {
-                router.push("/");
+                router.push(Routes.DASHBOARD);
+                window.location.reload();
             } else {
                 setFormError(response.error?.details || "Something went wrong. Please try again.");
             }

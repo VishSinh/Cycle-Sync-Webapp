@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { AuthService } from "@/service/api/auth-service";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Routes from "@/lib/routes";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -38,7 +39,8 @@ export default function AuthPage() {
 
       if (response.success) {
         // console.log(`${type === "login" ? "Login" : "Signup"} successful!`);
-        router.push("/");
+        router.push(Routes.DASHBOARD);
+        window.location.reload();
       } else {
         setError(response.error?.details || `${type === "login" ? "Login" : "Signup"} failed. Please try again.`);
       }
