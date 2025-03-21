@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
 
   images: {
     unoptimized: true, // Disable optimization
+    domains: ["images.pexels.com"], // Allow images from these domains
   },
 
 };

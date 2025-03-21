@@ -56,7 +56,7 @@ export default function AuthPage() {
       <div className="absolute inset-0 w-full h-full z-0">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm z-10"></div>
         <Image 
-          src="/images/auth-background.jpg" 
+          src="https://images.pexels.com/photos/2099737/pexels-photo-2099737.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
           alt="Background" 
           fill 
           style={{ objectFit: 'cover' }} 
@@ -139,7 +139,7 @@ export default function AuthPage() {
                         setActiveTab("login");
                         setError(null);
                       }}
-                      className="text-blue-600 hover:underline"
+                      className="text-pink-600 hover:underline"
                     >
                       Login
                     </button>
@@ -206,7 +206,7 @@ export default function AuthPage() {
                         setActiveTab("signup");
                         setError(null);
                       }}
-                      className="text-blue-600 hover:underline"
+                      className="text-pink-600 hover:underline"
                     >
                       Sign up
                     </button>
