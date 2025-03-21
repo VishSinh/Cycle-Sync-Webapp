@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   compress: true,
   // productionBrowserSourceMaps: false, // Optional for smaller builds
 
+  images: {
+    unoptimized: true, // Disable optimization
+  },
+
 };
 
 export default nextConfig;
